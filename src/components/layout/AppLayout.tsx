@@ -1,0 +1,185 @@
+import { useState } from 'react';
+import { Scale, LayoutDashboard, Briefcase, Users, FileText, CalendarDays, CheckSquare, Sparkles, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { cn, initials } from '../../lib/utils';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { DebugPanel } from '../ui/DebugPanel';
+
+export type View = 'dashboard' | 'cases' | 'clients' | 'documents' | 'calendar' | 'tasks' | 'ai';
+
+export interface NavItem {
+  id: View;
+  label: string;
+  icon: typeof LayoutDashboard;
+}
+
+const NAV: NavItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'clients', label: 'Clients', icon: Users },
+  { id: 'cases', label: 'Cases', icon: Briefcase },
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { id: 'ai', label: 'AI Workspace', icon: Sparkles },
+];
+
+export function AppLayout({
+  current,
+  onNavigate,
+  children,
+}: {
+  current: View;
+  onNavigate: (v: View) => void;
+  children: React.ReactNode;
+}) {
+  const { user, profile, signOut } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  const displayName = profile?.fullName ?? user?.email ?? 'Lawyer';
+
+  const SidebarContent = (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2.5 px-5 h-16 shrink-0">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white">
+          <Scale className="h-4.5 w-4.5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-ink-900 leading-tight tracking-tight">Legal Workspace</p>
+          <p className="text-[11px] text-ink-500 leading-tight">Practice Management</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
+        <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Workspace</p>
+        {NAV.map((item) => {
+          const Icon = item.icon;
+          const active = current === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                onNavigate(item.id);
+                setMobileOpen(false);
+              }}
+              className={cn(
+                'w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-ink-600 hover:text-ink-900 hover:bg-ink-100',
+              )}
+            >
+              <Icon className={cn('h-4.5 w-4.5 shrink-0', active ? 'text-primary-600' : 'text-ink-400')} />
+              {item.label}
+              {item.id === 'ai' && (
+                <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-ink-100 text-ink-500">
+                  Optional
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="px-3 pb-3 shrink-0">
+        <div className="rounded-lg border border-ink-200 bg-ink-50/50 p-3">
+          <p className="text-[11px] font-medium text-ink-500 uppercase tracking-wider">Principle</p>
+          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+            You remain in control. AI is optional and only activates when you choose.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-ink-200 bg-white">
+        {SidebarContent}
+      </aside>
+
+      {/* Mobile sidebar */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-40">
+          <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-72 bg-white border-r border-ink-200 shadow-elevated">
+            {SidebarContent}
+          </aside>
+        </div>
+      )}
+
+      <div className="lg:pl-60">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              className="lg:hidden p-2 rounded-md text-ink-500 hover:bg-ink-100"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-600 text-white">
+                <Scale className="h-4 w-4" />
+              </div>
+            </div>
+            <h1 className="text-sm font-semibold text-ink-900 hidden sm:block">
+              {NAV.find((n) => n.id === current)?.label}
+            </h1>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-lg hover:bg-ink-100 transition-colors"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-primary-700 text-xs font-semibold">
+                {initials(displayName)}
+              </div>
+              <span className="text-sm font-medium text-ink-700 hidden sm:block">{displayName}</span>
+              <ChevronDown className="h-3.5 w-3.5 text-ink-400" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg border border-ink-200 shadow-elevated z-20 py-1">
+                  <div className="px-3 py-2 border-b border-ink-100">
+                    <p className="text-sm font-medium text-ink-900 truncate">{displayName}</p>
+                    <p className="text-xs text-ink-500 truncate">{profile?.firmName ?? 'Independent practice'}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setConfirmSignOut(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
+                  >
+                    <LogOut className="h-4 w-4 text-ink-400" />
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </header>
+
+        <main className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto">{children}</main>
+      </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        onClose={() => setConfirmSignOut(false)}
+        onConfirm={signOut}
+        title="Sign out"
+        message="You will be returned to the sign-in screen."
+        confirmLabel="Sign out"
+      />
+
+      {/* Debug panel — dev only, hidden in production builds */}
+      <DebugPanel />
+    </div>
+  );
+}

@@ -20,6 +20,7 @@ import calendarRoutes from './routes/calendar.routes';
 import aiRoutes from './routes/ai.routes';
 
 const app = express();
+const globalPrefix = '/api';
 const allowedOrigins = new Set(
   [
     process.env.CLIENT_URL,
@@ -53,7 +54,7 @@ if (process.env.NODE_ENV !== 'test') {
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ── Rate limiting ──────────────────────────────────────────────────────────
-app.use('/api/', rateLimiter);
+app.use(`${globalPrefix}/`, rateLimiter);
 
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
@@ -61,15 +62,15 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API Routes ─────────────────────────────────────────────────────────────
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/cases', caseRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/calendar', calendarRoutes);
-app.use('/api/ai', aiRoutes);
+app.use(`${globalPrefix}/auth`, authRoutes);
+app.use(`${globalPrefix}/profile`, profileRoutes);
+app.use(`${globalPrefix}/dashboard`, dashboardRoutes);
+app.use(`${globalPrefix}/cases`, caseRoutes);
+app.use(`${globalPrefix}/clients`, clientRoutes);
+app.use(`${globalPrefix}/documents`, documentRoutes);
+app.use(`${globalPrefix}/tasks`, taskRoutes);
+app.use(`${globalPrefix}/calendar`, calendarRoutes);
+app.use(`${globalPrefix}/ai`, aiRoutes);
 
 // ── Error handling ─────────────────────────────────────────────────────────
 app.use(notFound);

@@ -25,11 +25,11 @@
 
 @layer components {
   .surface {
-    @apply bg-white border border-ink-200 rounded-xl;
+    @apply bg-white rounded-xl shadow-elevated;
   }
 
   .surface-subtle {
-    @apply bg-ink-50 border border-ink-200 rounded-xl;
+    @apply bg-ink-50 rounded-xl shadow-soft;
   }
 
   .input-base {

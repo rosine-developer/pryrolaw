@@ -26,11 +26,8 @@ export function Clients() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-ink-900">Clients</h2>
-          <p className="text-sm text-ink-500">{safeClients.length} total clients</p>
-        </div>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>
+        <p className="text-sm text-ink-500">{safeClients.length} total clients</p>
+        <Button size="lg" onClick={() => { setEditing(null); setShowForm(true); }}>
           <Plus className="h-4 w-4" /> New client
         </Button>
       </div>

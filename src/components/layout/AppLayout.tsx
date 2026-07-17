@@ -3,7 +3,6 @@ import { Scale, LayoutDashboard, Briefcase, Users, FileText, CalendarDays, Spark
 import { useAuth } from '../../context/AuthContext';
 import { cn, initials } from '../../lib/utils';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { DebugPanel } from '../ui/DebugPanel';
 
 export type View = 'dashboard' | 'cases' | 'clients' | 'documents' | 'calendar' | 'ai';
 
@@ -63,9 +62,9 @@ function AiFloatingButton({ onNavigate }: { onNavigate: (v: View) => void }) {
       onMouseDown={onMouseDown}
       onClick={() => { if (!didDrag.current) onNavigate('ai'); }}
       style={{ bottom: defaultBottom, right: defaultRight }}
-      className="fixed z-50 flex items-center gap-2 px-3 py-2 rounded-full shadow-lg text-xs font-semibold border transition-all duration-200 group overflow-hidden cursor-grab active:cursor-grabbing select-none bg-primary-600 border-primary-700 text-white hover:bg-primary-700"
+      className="fixed z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold border transition-all duration-200 group overflow-hidden cursor-grab active:cursor-grabbing select-none bg-primary-600 border-primary-700 text-white hover:bg-primary-700"
     >
-      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+      <Sparkles className="h-4.5 w-4.5 shrink-0" />
       <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-200">
         AI Workspace
       </span>
@@ -236,9 +235,6 @@ export function AppLayout({
           </div>
         </>
       )}
-
-      {/* Debug panel — dev only */}
-      {import.meta.env.DEV ? <DebugPanel /> : null}
 
       {/* AI Workspace floating draggable button */}
       <AiFloatingButton onNavigate={onNavigate} />

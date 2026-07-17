@@ -39,7 +39,13 @@ export default {
         'elevated': '0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04)',
       },
       borderRadius: {
-        'xl': '0.875rem',
+        'sm':   '0.375rem',  // 6px  — inputs, badges
+        'md':   '0.625rem',  // 10px — small buttons
+        'lg':   '1rem',      // 16px — buttons, dropdowns
+        'xl':   '1.25rem',   // 20px — cards, panels
+        '2xl':  '1.5rem',    // 24px — modals, sidebars
+        '3xl':  '1.5625rem', // 25px — hero sections
+        'full': '9999px',    // pills, avatars
       },
     },
   },

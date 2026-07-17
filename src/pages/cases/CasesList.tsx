@@ -37,11 +37,8 @@ export function CasesList({ onOpenCase }: Props) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-ink-900">Cases</h2>
-          <p className="text-sm text-ink-500">{data?.total ?? 0} total cases</p>
-        </div>
-        <Button onClick={() => setShowForm(true)}>
+        <p className="text-sm text-ink-500">{data?.total ?? 0} total cases</p>
+        <Button size="lg" onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" /> New case
         </Button>
       </div>

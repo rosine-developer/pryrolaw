@@ -23,6 +23,9 @@ const app = express();
 const allowedOrigins = new Set(
   [
     process.env.CLIENT_URL,
+    ...(process.env.CLIENT_URLS?.split(',').map((origin) => origin.trim()) ?? []),
+    'http://localhost:5173',
+    'https://pryrolaw.vercel.app',
   ].filter((origin): origin is string => Boolean(origin)),
 );
 
@@ -31,12 +34,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`CORS blocked for origin: ${origin}`));
+      callback(null, !origin || allowedOrigins.has(origin));
     },
     credentials: true,
   }),

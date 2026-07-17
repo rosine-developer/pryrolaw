@@ -1,39 +1,31 @@
-// Legal Workspace — Prisma Schema
-// PostgreSQL + full relational model
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ─────────────────────────────────────────────
-// AUTH
-// ─────────────────────────────────────────────
-
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  profile       LawyerProfile?
-  cases         Case[]
-  clients       Client[]
-  documents     Document[]
+  id               String            @id @default(uuid())
+  email            String            @unique
+  passwordHash     String            @map("password_hash")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  conversations    AIConversation[]
+  messages         AIMessage[]
+  events           CalendarEvent[]
+  caseNotes        CaseNote[]
+  caseTimeline     CaseTimeline[]
+  cases            Case[]
+  clients          Client[]
   documentVersions DocumentVersion[]
-  tasks         Task[]
-  events        CalendarEvent[]
-  caseNotes     CaseNote[]
-  caseTimeline  CaseTimeline[]
-  conversations AIConversation[]
-  messages      AIMessage[]
-  refreshTokens RefreshToken[]
+  documents        Document[]
+  profile          LawyerProfile?
+  refreshTokens    RefreshToken[]
+  tasks            Task[]
 
   @@map("users")
 }
@@ -44,15 +36,10 @@ model RefreshToken {
   userId    String   @map("user_id")
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
-
-// ─────────────────────────────────────────────
-// LAWYER PROFILE
-// ─────────────────────────────────────────────
 
 model LawyerProfile {
   id                  String   @id @default(uuid())
@@ -64,15 +51,10 @@ model LawyerProfile {
   avatarUrl           String?  @map("avatar_url")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("lawyer_profiles")
 }
-
-// ─────────────────────────────────────────────
-// CLIENT
-// ─────────────────────────────────────────────
 
 model Client {
   id        String     @id @default(uuid())
@@ -86,48 +68,172 @@ model Client {
   notes     String?
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
-
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cases Case[]
+  cases     Case[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("clients")
+}
+
+model Case {
+  id             String           @id @default(uuid())
+  userId         String           @map("user_id")
+  clientId       String?          @map("client_id")
+  title          String
+  caseNumber     String           @map("case_number")
+  caseType       String           @map("case_type")
+  jurisdiction   String?
+  description    String?
+  status         CaseStatus       @default(OPEN)
+  priority       CasePriority     @default(MEDIUM)
+  opposingParty  String?          @map("opposing_party")
+  assignedLawyer String?          @map("assigned_lawyer")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  conversations  AIConversation[]
+  events         CalendarEvent[]
+  notes          CaseNote[]
+  timeline       CaseTimeline[]
+  client         Client?          @relation(fields: [clientId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents      Document[]
+  tasks          Task[]
+
+  @@map("cases")
+}
+
+model CaseNote {
+  id        String   @id @default(uuid())
+  caseId    String   @map("case_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("case_notes")
+}
+
+model CaseTimeline {
+  id          String   @id @default(uuid())
+  caseId      String   @map("case_id")
+  userId      String   @map("user_id")
+  eventType   String   @map("event_type")
+  title       String
+  description String?
+  eventDate   DateTime @map("event_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("case_timeline")
+}
+
+model Document {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  caseId      String?           @map("case_id")
+  title       String
+  category    DocumentCategory  @default(GENERAL)
+  fileType    String            @map("file_type")
+  fileSize    Int?              @map("file_size")
+  storagePath String?           @map("storage_path")
+  description String?
+  status      DocumentStatus    @default(DRAFT)
+  tags        String[]          @default([])
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  versions    DocumentVersion[]
+  case        Case?             @relation(fields: [caseId], references: [id])
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String   @id @default(uuid())
+  documentId    String   @map("document_id")
+  userId        String   @map("user_id")
+  versionNumber Int      @map("version_number")
+  storagePath   String?  @map("storage_path")
+  fileSize      Int?     @map("file_size")
+  changeNote    String?  @map("change_note")
+  createdAt     DateTime @default(now()) @map("created_at")
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("document_versions")
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  userId      String       @map("user_id")
+  caseId      String?      @map("case_id")
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  dueDate     DateTime?    @map("due_date")
+  assignedTo  String?      @map("assigned_to")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  case        Case?        @relation(fields: [caseId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+model CalendarEvent {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  caseId          String?   @map("case_id")
+  title           String
+  description     String?
+  eventType       EventType @map("event_type")
+  location        String?
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime  @map("end_time")
+  reminderMinutes Int       @default(30) @map("reminder_minutes")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  case            Case?     @relation(fields: [caseId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_events")
+}
+
+model AIConversation {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  caseId         String?     @map("case_id")
+  title          String
+  contextSummary String?     @map("context_summary")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  case           Case?       @relation(fields: [caseId], references: [id])
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       AIMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String         @map("conversation_id")
+  userId         String         @map("user_id")
+  role           ChatRole
+  content        String
+  metadata       Json?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
 }
 
 enum ClientType {
   INDIVIDUAL
   ORGANIZATION
-}
-
-// ─────────────────────────────────────────────
-// CASE
-// ─────────────────────────────────────────────
-
-model Case {
-  id              String       @id @default(uuid())
-  userId          String       @map("user_id")
-  clientId        String?      @map("client_id")
-  title           String
-  caseNumber      String       @map("case_number")
-  caseType        String       @map("case_type")
-  jurisdiction    String?
-  description     String?
-  status          CaseStatus   @default(OPEN)
-  priority        CasePriority @default(MEDIUM)
-  opposingParty   String?      @map("opposing_party")
-  assignedLawyer  String?      @map("assigned_lawyer")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client        Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  documents     Document[]
-  tasks         Task[]
-  events        CalendarEvent[]
-  notes         CaseNote[]
-  timeline      CaseTimeline[]
-  conversations AIConversation[]
-
-  @@map("cases")
 }
 
 enum CaseStatus {
@@ -142,70 +248,6 @@ enum CasePriority {
   MEDIUM
   HIGH
   URGENT
-}
-
-// ─────────────────────────────────────────────
-// CASE NOTES
-// ─────────────────────────────────────────────
-
-model CaseNote {
-  id        String   @id @default(uuid())
-  caseId    String   @map("case_id")
-  userId    String   @map("user_id")
-  content   String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("case_notes")
-}
-
-// ─────────────────────────────────────────────
-// CASE TIMELINE
-// ─────────────────────────────────────────────
-
-model CaseTimeline {
-  id          String   @id @default(uuid())
-  caseId      String   @map("case_id")
-  userId      String   @map("user_id")
-  eventType   String   @map("event_type")
-  title       String
-  description String?
-  eventDate   DateTime @map("event_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("case_timeline")
-}
-
-// ─────────────────────────────────────────────
-// DOCUMENT
-// ─────────────────────────────────────────────
-
-model Document {
-  id          String           @id @default(uuid())
-  userId      String           @map("user_id")
-  caseId      String?          @map("case_id")
-  title       String
-  category    DocumentCategory @default(GENERAL)
-  fileType    String           @map("file_type")
-  fileSize    Int?             @map("file_size")
-  storagePath String?          @map("storage_path")
-  description String?
-  status      DocumentStatus   @default(DRAFT)
-  tags        String[]         @default([])
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  case     Case?             @relation(fields: [caseId], references: [id], onDelete: SetNull)
-  versions DocumentVersion[]
-
-  @@map("documents")
 }
 
 enum DocumentCategory {
@@ -226,45 +268,6 @@ enum DocumentStatus {
   ARCHIVED
 }
 
-model DocumentVersion {
-  id            String   @id @default(uuid())
-  documentId    String   @map("document_id")
-  userId        String   @map("user_id")
-  versionNumber Int      @map("version_number")
-  storagePath   String?  @map("storage_path")
-  fileSize      Int?     @map("file_size")
-  changeNote    String?  @map("change_note")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("document_versions")
-}
-
-// ─────────────────────────────────────────────
-// TASK
-// ─────────────────────────────────────────────
-
-model Task {
-  id          String       @id @default(uuid())
-  userId      String       @map("user_id")
-  caseId      String?      @map("case_id")
-  title       String
-  description String?
-  priority    TaskPriority @default(MEDIUM)
-  status      TaskStatus   @default(TODO)
-  dueDate     DateTime?    @map("due_date")
-  assignedTo  String?      @map("assigned_to")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  case Case? @relation(fields: [caseId], references: [id], onDelete: SetNull)
-
-  @@map("tasks")
-}
-
 enum TaskStatus {
   TODO
   IN_PROGRESS
@@ -279,71 +282,12 @@ enum TaskPriority {
   URGENT
 }
 
-// ─────────────────────────────────────────────
-// CALENDAR EVENT
-// ─────────────────────────────────────────────
-
-model CalendarEvent {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  caseId          String?   @map("case_id")
-  title           String
-  description     String?
-  eventType       EventType @map("event_type")
-  location        String?
-  startTime       DateTime  @map("start_time")
-  endTime         DateTime  @map("end_time")
-  reminderMinutes Int       @default(30) @map("reminder_minutes")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  case Case? @relation(fields: [caseId], references: [id], onDelete: SetNull)
-
-  @@map("calendar_events")
-}
-
 enum EventType {
   HEARING
   MEETING
   FILING_DEADLINE
   REMINDER
   OTHER
-}
-
-// ─────────────────────────────────────────────
-// AI
-// ─────────────────────────────────────────────
-
-model AIConversation {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  caseId         String?  @map("case_id")
-  title          String
-  contextSummary String?  @map("context_summary")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  case     Case?       @relation(fields: [caseId], references: [id], onDelete: SetNull)
-  messages AIMessage[]
-
-  @@map("ai_conversations")
-}
-
-model AIMessage {
-  id             String   @id @default(uuid())
-  conversationId String   @map("conversation_id")
-  userId         String   @map("user_id")
-  role           ChatRole
-  content        String
-  metadata       Json?
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("ai_messages")
 }
 
 enum ChatRole {

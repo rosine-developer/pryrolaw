@@ -157,7 +157,7 @@ function WeekGrid({ days, events, tasks, onEditEvent, onDeleteEvent, onOpenCase 
   }, []);
 
   return (
-    <div className="border border-ink-200 rounded-xl overflow-hidden bg-white flex-1 relative" onClick={() => setPopover(null)}>
+    <div className="border border-ink-200 rounded-xl overflow-hidden bg-white flex-1 relative shadow-card" onClick={() => setPopover(null)}>
       {/* Day headers */}
       <div className="grid sticky top-0 z-10 bg-white border-b border-ink-200" style={{ gridTemplateColumns: '52px repeat(7, 1fr)' }}>
         <div className="border-r border-ink-100" />
@@ -331,8 +331,7 @@ export function Calendar({ onOpenCase }: Props) {
     <div className="space-y-3">
       {/* Top bar */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-ink-900">Calendar</h2>
-        <Button onClick={() => { setEditingEvent(null); setShowEventForm(true); }}><Plus className="h-4 w-4" /> New event</Button>
+        <Button size="lg" onClick={() => { setEditingEvent(null); setShowEventForm(true); }}><Plus className="h-4 w-4" /> New event</Button>
       </div>
 
       {/* Tabs */}

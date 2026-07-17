@@ -152,7 +152,7 @@ function StatCard({
   return (
     <button
       onClick={onClick}
-      className="bg-white border border-ink-200 rounded-xl px-4 py-4 text-left hover:border-ink-300 hover:shadow-soft transition-all w-full"
+      className="bg-white rounded-xl px-4 py-4 text-left hover:shadow-elevated transition-all w-full shadow-card"
     >
       <div className={`inline-flex p-1.5 rounded-lg mb-2 ${
         color === 'blue' ? 'bg-primary-50 text-primary-600' :

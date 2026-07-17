@@ -35,7 +35,7 @@ export function AuthPage() {
         }} />
         <div className="relative flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600">
-            <Scale className="h-5 w-5" />
+            <Scale className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-semibold tracking-tight">Legal Workspace</span>
         </div>
@@ -49,15 +49,15 @@ export function AuthPage() {
           </p>
           <ul className="space-y-3 text-sm text-ink-200">
             <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0" />
               Centralized case management with timelines and notes
             </li>
             <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0" />
               Secure document workspace with version tracking
             </li>
             <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-400 shrink-0" />
               Optional AI assistance — always lawyer-directed
             </li>
           </ul>
@@ -67,9 +67,11 @@ export function AuthPage() {
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      {/* Right form panel — white */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
         <div className="w-full max-w-sm">
+
+          {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white">
               <Scale className="h-5 w-5" />
@@ -134,11 +136,8 @@ export function AuthPage() {
             {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
-              onClick={() => {
-                setMode(mode === 'signin' ? 'signup' : 'signin');
-                setError(null);
-              }}
-              className="font-medium text-primary-600 hover:text-primary-700"
+              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
+              className="font-medium text-primary-600 hover:text-primary-700 transition-colors"
             >
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Scale, LayoutDashboard, Briefcase, Users, FileText, CalendarDays, CheckSquare, Sparkles, LogOut, Menu, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn, initials } from '../../lib/utils';
@@ -20,8 +20,59 @@ const NAV: NavItem[] = [
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'calendar', label: 'Calendar', icon: CalendarDays },
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { id: 'ai', label: 'AI Workspace', icon: Sparkles },
 ];
+
+function AiFloatingButton({ onNavigate }: { onNavigate: (v: View) => void }) {
+  const defaultRight = import.meta.env.DEV ? 112 : 20;
+  const defaultBottom = 20;
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const didDrag = useRef(false);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    dragging.current = true;
+    didDrag.current = false;
+    const rect = btnRef.current!.getBoundingClientRect();
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging.current || !btnRef.current) return;
+      didDrag.current = true;
+      const x = Math.min(Math.max(0, e.clientX - dragOffset.current.x), window.innerWidth - btnRef.current.offsetWidth);
+      const y = Math.min(Math.max(0, e.clientY - dragOffset.current.y), window.innerHeight - btnRef.current.offsetHeight);
+      btnRef.current.style.left = `${x}px`;
+      btnRef.current.style.top = `${y}px`;
+      btnRef.current.style.right = 'auto';
+      btnRef.current.style.bottom = 'auto';
+    };
+    const onMouseUp = () => { dragging.current = false; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
+  return (
+    <button
+      ref={btnRef}
+      onMouseDown={onMouseDown}
+      onClick={() => { if (!didDrag.current) onNavigate('ai'); }}
+      style={{ bottom: defaultBottom, right: defaultRight }}
+      className="fixed z-50 flex items-center gap-2 px-3 py-2 rounded-full shadow-lg text-xs font-semibold border transition-all duration-200 group overflow-hidden cursor-grab active:cursor-grabbing select-none bg-primary-600 border-primary-700 text-white hover:bg-primary-700"
+    >
+      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+      <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-200">
+        AI Workspace
+      </span>
+    </button>
+  );
+}
 
 export function AppLayout({
   current,
@@ -83,12 +134,6 @@ export function AppLayout({
       </nav>
 
       <div className="px-3 pb-3 shrink-0">
-        <div className="rounded-lg border border-ink-200 bg-ink-50/50 p-3">
-          <p className="text-[11px] font-medium text-ink-500 uppercase tracking-wider">Principle</p>
-          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-            You remain in control. AI is optional and only activates when you choose.
-          </p>
-        </div>
       </div>
     </div>
   );
@@ -180,6 +225,9 @@ export function AppLayout({
 
       {/* Debug panel — dev only, hidden in production builds */}
       {import.meta.env.DEV ? <DebugPanel /> : null}
+
+      {/* AI Workspace floating draggable button */}
+      <AiFloatingButton onNavigate={onNavigate} />
     </div>
   );
 }

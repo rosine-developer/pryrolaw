@@ -26,6 +26,8 @@ const allowedOrigins = new Set(
     process.env.CLIENT_URL,
     ...(process.env.CLIENT_URLS?.split(',').map((origin) => origin.trim()) ?? []),
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
     'https://pryrolaw.vercel.app',
   ].filter((origin): origin is string => Boolean(origin)),
 );

@@ -179,7 +179,7 @@ export function AppLayout({
       />
 
       {/* Debug panel — dev only, hidden in production builds */}
-      <DebugPanel />
+      {import.meta.env.DEV ? <DebugPanel /> : null}
     </div>
   );
 }

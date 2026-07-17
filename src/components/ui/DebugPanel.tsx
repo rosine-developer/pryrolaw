@@ -20,6 +20,8 @@ function StatusIcon({ status }: { status: Status }) {
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
 export function DebugPanel() {
+  if (!import.meta.env.DEV) return null;
+
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'auth' | 'services' | 'data' | 'errors'>('auth');
@@ -100,8 +102,6 @@ export function DebugPanel() {
     if (open && checks.api.status === 'idle') { runChecks(); loadCounts(); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  if (import.meta.env.PROD) return null;
 
   const hasError = Object.values(checks).some((c) => c.status === 'error') || errors.length > 0;
   const allOk = Object.values(checks).every((c) => c.status === 'ok') && errors.length === 0;

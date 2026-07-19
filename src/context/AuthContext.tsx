@@ -48,6 +48,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // Keep UI auth state in sync when API layer clears tokens (e.g. refresh failure).
+  useEffect(() => {
+    const onTokensCleared = () => {
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+    };
+
+    window.addEventListener('auth:tokens-cleared', onTokensCleared);
+    return () => {
+      window.removeEventListener('auth:tokens-cleared', onTokensCleared);
+    };
+  }, []);
+
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
       const data = await authApi.login(email, password);

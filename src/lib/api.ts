@@ -6,6 +6,12 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
+function emitAuthTokensCleared() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth:tokens-cleared'));
+  }
+}
+
 // ── Token storage ────────────────────────────────────────────────────────────
 
 const tokenStore = {
@@ -29,6 +35,7 @@ const tokenStore = {
     this.refresh = '';
     localStorage.removeItem('lw_access');
     localStorage.removeItem('lw_refresh');
+    emitAuthTokensCleared();
   },
 };
 

@@ -21,8 +21,8 @@ const NAV: NavItem[] = [
 ];
 
 function AiFloatingButton({ onNavigate }: { onNavigate: (v: View) => void }) {
-  const defaultRight = import.meta.env.DEV ? 112 : 20;
-  const defaultBottom = 20;
+  const defaultRight = 20;
+  const defaultTop = 20;
   const btnRef = useRef<HTMLButtonElement>(null);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -61,13 +61,12 @@ function AiFloatingButton({ onNavigate }: { onNavigate: (v: View) => void }) {
       ref={btnRef}
       onMouseDown={onMouseDown}
       onClick={() => { if (!didDrag.current) onNavigate('ai'); }}
-      style={{ bottom: defaultBottom, right: defaultRight }}
-      className="fixed z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold border transition-all duration-200 group overflow-hidden cursor-grab active:cursor-grabbing select-none bg-primary-600 border-primary-700 text-white hover:bg-primary-700"
+      style={{ top: defaultTop, right: defaultRight }}
+      className="fixed z-50 inline-flex h-10 w-10 items-center justify-center rounded-full text-primary-600 transition-all duration-200 cursor-grab active:cursor-grabbing select-none hover:bg-primary-100 hover:text-primary-700"
+      title="AI Workspace"
+      aria-label="Open AI Workspace"
     >
-      <Sparkles className="h-4.5 w-4.5 shrink-0" />
-      <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-200">
-        AI Workspace
-      </span>
+      <Sparkles className="h-5 w-5" />
     </button>
   );
 }
@@ -237,7 +236,7 @@ export function AppLayout({
       )}
 
       {/* AI Workspace floating draggable button */}
-      <AiFloatingButton onNavigate={onNavigate} />
+      {current !== 'ai' && <AiFloatingButton onNavigate={onNavigate} />}
     </div>
   );
 }

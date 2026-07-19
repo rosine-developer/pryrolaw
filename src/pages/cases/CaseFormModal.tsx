@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -23,6 +24,17 @@ export function CaseFormModal({ existing, onClose, onSaved }: Props) {
   const [clients, setClients] = useState<ApiClient[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showQuickClientForm, setShowQuickClientForm] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [clientError, setClientError] = useState('');
+
+  const [clientForm, setClientForm] = useState({
+    name: '',
+    type: 'INDIVIDUAL' as ApiClient['type'],
+    email: '',
+    phone: '',
+    company: '',
+  });
 
   const [form, setForm] = useState({
     title: existing?.title ?? '',
@@ -44,6 +56,50 @@ export function CaseFormModal({ existing, onClose, onSaved }: Props) {
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const setClientField = (k: keyof typeof clientForm) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setClientForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const resetQuickClientForm = () => {
+    setClientForm({
+      name: '',
+      type: 'INDIVIDUAL',
+      email: '',
+      phone: '',
+      company: '',
+    });
+    setClientError('');
+  };
+
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setClientError('');
+
+    if (!clientForm.name.trim()) {
+      setClientError('Customer name is required.');
+      return;
+    }
+
+    setCreatingClient(true);
+    try {
+      const created = await clientsApi.create({
+        ...clientForm,
+        name: clientForm.name.trim(),
+        email: clientForm.email.trim() || undefined,
+        phone: clientForm.phone.trim() || undefined,
+        company: clientForm.company.trim() || undefined,
+      });
+      setClients((current) => [...current, created]);
+      setForm((current) => ({ ...current, clientId: created.id }));
+      setShowQuickClientForm(false);
+      resetQuickClientForm();
+    } catch (err) {
+      setClientError((err as Error).message);
+    } finally {
+      setCreatingClient(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +166,66 @@ export function CaseFormModal({ existing, onClose, onSaved }: Props) {
           </div>
           <div>
             <label className="block text-xs font-medium text-ink-700 mb-1">Client</label>
-            <select value={form.clientId} onChange={set('clientId')} className="w-full h-9 px-3 text-sm border border-ink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-              <option value="">No client</option>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <div className="relative">
+              <select
+                value={form.clientId}
+                onChange={set('clientId')}
+                className="w-full h-9 appearance-none px-3 pr-10 text-sm border border-ink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">No client</option>
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQuickClientForm((open) => !open);
+                  setClientError('');
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-6 w-6 rounded-full text-primary-600 hover:bg-primary-50 hover:text-primary-700"
+                aria-label={showQuickClientForm ? 'Cancel new customer' : 'Add new customer'}
+                title={showQuickClientForm ? 'Cancel new customer' : 'Add new customer'}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            {showQuickClientForm && (
+              <div className="mt-3 rounded-xl border border-primary-100 bg-primary-50/40 p-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-ink-700 mb-1">Customer name *</label>
+                    <Input value={clientForm.name} onChange={setClientField('name')} required placeholder="e.g. Jane Doe or Acme Corp" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-700 mb-1">Customer type</label>
+                    <select value={clientForm.type} onChange={setClientField('type')} className="w-full h-9 px-3 text-sm border border-ink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                      <option value="INDIVIDUAL">Individual</option>
+                      <option value="ORGANIZATION">Organization</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-700 mb-1">Company</label>
+                    <Input value={clientForm.company} onChange={setClientField('company')} placeholder="Optional" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-700 mb-1">Email</label>
+                    <Input type="email" value={clientForm.email} onChange={setClientField('email')} placeholder="Optional" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-700 mb-1">Phone</label>
+                    <Input value={clientForm.phone} onChange={setClientField('phone')} placeholder="Optional" />
+                  </div>
+                </div>
+                {clientError && <p className="text-sm text-red-600">{clientError}</p>}
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button type="button" variant="outline" onClick={() => { setShowQuickClientForm(false); resetQuickClientForm(); }}>
+                    Cancel
+                  </Button>
+                  <Button type="button" loading={creatingClient} onClick={handleCreateClient}>
+                    Create customer
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs font-medium text-ink-700 mb-1">Opposing party</label>

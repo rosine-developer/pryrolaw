@@ -135,6 +135,14 @@ export const authApi = {
     return data;
   },
 
+  async forgotPassword(email: string) {
+    return request<void>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+  },
+
+  async resetPassword(token: string, password: string) {
+    return request<void>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) });
+  },
+
   async logout() {
     await request('/auth/logout', {
       method: 'POST',

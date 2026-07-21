@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { Resend } from 'resend';
 import { prisma } from '../lib/prisma';
 import { hashPassword, comparePassword } from '../lib/password';
 import {
@@ -140,5 +141,76 @@ export const AuthService = {
     });
 
     return { accessToken, refreshToken };
+  },
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    // Always return success to avoid leaking whether an account exists.
+    if (!user) return;
+
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+
+    // Persist token in DB
+    await prisma.passwordResetToken.create({
+      data: { token, userId: user.id, expiresAt },
+    });
+
+    const frontend = process.env.FRONTEND_URL ?? 'http://localhost:5174';
+    const resetUrl = `${frontend}/reset-password?token=${token}`;
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log(`[DEV] Password reset link for ${email}: ${resetUrl}`);
+      return;
+    }
+
+    try {
+      const resend = new Resend(apiKey);
+      const from = process.env.EMAIL_FROM ?? 'Legal Workspace <no-reply@legalworkspace.app>';
+
+      await resend.emails.send({
+        from,
+        to: email,
+        subject: 'Reset your Legal Workspace password',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+            <h2 style="font-size:20px;font-weight:600;color:#0f172a;margin:0 0 8px">Reset your password</h2>
+            <p style="font-size:14px;color:#64748b;margin:0 0 24px">
+              Click the button below to set a new password. This link expires in <strong>1 hour</strong>.
+            </p>
+            <a href="${resetUrl}"
+              style="display:inline-block;background:#2563eb;color:#fff;font-size:14px;font-weight:600;
+                     padding:12px 24px;border-radius:8px;text-decoration:none">
+              Reset password
+            </a>
+            <p style="font-size:12px;color:#94a3b8;margin:24px 0 0">
+              If you didn't request this, you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      });
+
+      console.log(`Password reset email sent to ${email}`);
+    } catch (err) {
+      console.error('Failed to send password reset email via Resend:', err);
+      console.log(`[FALLBACK] Reset link: ${resetUrl}`);
+    }
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+    if (!record || record.expiresAt < new Date()) {
+      throw AppError.badRequest('Invalid or expired password reset token.');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: record.userId } });
+    if (!user) throw AppError.notFound('User not found.');
+
+    const passwordHash = await hashPassword(newPassword);
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+
+    // Delete token record
+    await prisma.passwordResetToken.delete({ where: { id: record.id } });
   },
 };

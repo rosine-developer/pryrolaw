@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Scale, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ResetPasswordModal } from '../../components/ui/ResetPasswordModal';
 
 export function AuthPage() {
   const { signIn, signUp } = useAuth();
@@ -13,6 +14,21 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetToken, setResetToken] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('token');
+      if (t) {
+        setResetToken(t);
+        setResetOpen(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,6 +43,7 @@ export function AuthPage() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex-1 flex items-center justify-center">
         <div className="flex w-full max-w-5xl mx-auto px-6">
@@ -108,10 +125,10 @@ export function AuthPage() {
                   label="Password"
                   type={showPassword ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                   className="pr-10"
                 />
@@ -125,6 +142,18 @@ export function AuthPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+
+              {mode === 'signin' && (
+                <div className="flex items-center justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setResetOpen(true)}
+                    className="text-sm text-ink-500 hover:text-ink-700 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
 
               {error && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
@@ -161,5 +190,7 @@ export function AuthPage() {
         </div>
       </footer>
     </div>
+    <ResetPasswordModal open={resetOpen} onClose={() => setResetOpen(false)} token={resetToken} />
+    </>
   );
 }

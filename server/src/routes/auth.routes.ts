@@ -22,10 +22,19 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const forgotSchema = z.object({ email: z.string().email() });
+
+const resetSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
 router.post('/register', authRateLimiter, validate(registerSchema), AuthController.register);
 router.post('/login', authRateLimiter, validate(loginSchema), AuthController.login);
 router.post('/refresh', validate(refreshSchema), AuthController.refresh);
 router.post('/logout', AuthController.logout);
 router.get('/me', authenticate, AuthController.me);
+router.post('/forgot-password', authRateLimiter, validate(forgotSchema), AuthController.forgotPassword);
+router.post('/reset-password', authRateLimiter, validate(resetSchema), AuthController.resetPassword);
 
 export default router;

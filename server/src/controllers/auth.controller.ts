@@ -34,6 +34,22 @@ export const AuthController = {
     } catch (e) { next(e); }
   },
 
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+      await AuthService.forgotPassword(email);
+      res.status(204).send();
+    } catch (e) { next(e); }
+  },
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token, password } = req.body;
+      await AuthService.resetPassword(token, password);
+      res.status(200).json({ message: 'Password reset successfully.' });
+    } catch (e) { next(e); }
+  },
+
   async me(req: Request, res: Response, next: NextFunction) {
     try {
       const { prisma } = await import('../lib/prisma');

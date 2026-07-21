@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Scale, LayoutDashboard, Briefcase, Users, FileText, CalendarDays, Sparkles, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { Scale, LayoutDashboard, Briefcase, Users, FileText, CalendarDays, Sparkles, LogOut, Menu, ChevronDown, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn, initials } from '../../lib/utils';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -84,18 +84,18 @@ export function AppLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const displayName = profile?.fullName ?? user?.email ?? 'Lawyer';
 
   const SidebarContent = (isMobile = false) => (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col relative">
       {/* Logo */}
-      <div className={cn('flex items-center h-16 shrink-0 px-3', expanded || isMobile ? 'gap-2.5' : 'justify-center')}>
+      <div className={cn('flex items-center h-16 shrink-0 px-3', sidebarOpen || isMobile ? 'gap-2.5 px-4' : 'justify-center')}>
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white">
           <Scale className="h-4 w-4" />
         </div>
-        {(expanded || isMobile) && (
+        {(sidebarOpen || isMobile) && (
           <div className="min-w-0">
             <p className="text-sm font-semibold text-ink-900 leading-tight tracking-tight whitespace-nowrap">Legal Workspace</p>
             <p className="text-[11px] text-ink-500 leading-tight">Practice Management</p>
@@ -105,7 +105,7 @@ export function AppLayout({
 
       {/* Nav */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {(expanded || isMobile) && (
+        {(sidebarOpen || isMobile) && (
           <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Workspace</p>
         )}
         {NAV.map((item) => {
@@ -115,56 +115,67 @@ export function AppLayout({
             <button
               key={item.id}
               onClick={() => { onNavigate(item.id); setMobileOpen(false); }}
-              title={!expanded && !isMobile ? item.label : undefined}
+              title={!sidebarOpen && !isMobile ? item.label : undefined}
               className={cn(
                 'w-full flex items-center rounded-lg text-sm font-medium transition-colors',
-                expanded || isMobile ? 'gap-3 px-2.5 py-2' : 'justify-center px-2 py-2.5',
-                active ? 'bg-primary-50 text-primary-700' : 'text-ink-600 hover:text-ink-900 hover:bg-ink-100',
+                sidebarOpen || isMobile ? 'gap-3 px-2.5 py-2' : 'justify-center px-2 py-2.5',
+                active ? 'bg-primary-600 text-white' : 'text-ink-600 hover:text-ink-900 hover:bg-ink-100',
               )}
             >
-              <Icon className={cn('h-4.5 w-4.5 shrink-0', active ? 'text-primary-600' : 'text-ink-400')} />
-              {(expanded || isMobile) && <span className="whitespace-nowrap">{item.label}</span>}
+              <Icon className={cn('h-4.5 w-4.5 shrink-0', active ? 'text-white' : 'text-ink-400')} />
+              {(sidebarOpen || isMobile) && <span className="whitespace-nowrap">{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
       {/* Profile — bottom of sidebar */}
-      <div className={cn('shrink-0 px-2 pb-3 border-t border-ink-100 pt-2')}>
+      <div className="shrink-0 px-2 pb-3 border-t border-ink-100 pt-2">
         <button
           onClick={() => { setMenuOpen(v => !v); }}
-          title={!expanded && !isMobile ? displayName : undefined}
+          title={!sidebarOpen ? displayName : undefined}
           className={cn(
             'w-full flex items-center rounded-lg text-sm font-medium transition-colors hover:bg-ink-100',
-            expanded || isMobile ? 'gap-3 px-2.5 py-2' : 'justify-center px-2 py-2.5',
+            sidebarOpen ? 'gap-3 px-2.5 py-2' : 'justify-center px-2 py-2.5',
           )}
         >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 text-xs font-semibold">
             {initials(displayName)}
           </div>
-          {(expanded || isMobile) && (
-            <div className="min-w-0 flex-1 text-left">
-              <p className="text-sm font-medium text-ink-800 truncate">{displayName}</p>
-              <p className="text-[11px] text-ink-400 truncate">{profile?.firmName ?? 'Independent practice'}</p>
-            </div>
+          {sidebarOpen && (
+            <>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm font-medium text-ink-800 truncate">{displayName}</p>
+                <p className="text-[11px] text-ink-400 truncate">{profile?.firmName ?? 'Independent practice'}</p>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-ink-400 shrink-0" />
+            </>
           )}
-          {(expanded || isMobile) && <ChevronDown className="h-3.5 w-3.5 text-ink-400 shrink-0" />}
         </button>
       </div>
+
+      {/* Collapse toggle — only on desktop, sits at top right of sidebar */}
+      {!isMobile && (
+        <button
+          onClick={() => setSidebarOpen(v => !v)}
+          className="absolute top-4 -right-3.5 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-white border border-ink-200 shadow-card text-ink-500 hover:text-primary-600 hover:border-primary-300 transition-colors"
+          aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {sidebarOpen
+            ? <ChevronLeft className="h-4 w-4" />
+            : <ChevronRight className="h-4 w-4" />}
+        </button>
+      )}
     </div>
   );
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Desktop sidebar — collapsed by default, expands on hover */}
-      <aside
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}
-        className={cn(
-          'hidden lg:flex fixed inset-y-0 left-0 border-r border-ink-200 bg-white z-20 transition-all duration-200',
-          expanded ? 'w-60' : 'w-16',
-        )}
-      >
+      {/* Desktop sidebar — toggleable, collapses to icon rail */}
+      <aside className={cn(
+        'hidden lg:flex fixed inset-y-0 left-0 border-r border-ink-200 bg-white z-20 transition-all duration-200 overflow-visible',
+        sidebarOpen ? 'w-60' : 'w-16',
+      )}>
         {SidebarContent()}
       </aside>
 
@@ -178,10 +189,11 @@ export function AppLayout({
         </div>
       )}
 
-      <div className={cn('transition-all duration-200', expanded ? 'lg:pl-60' : 'lg:pl-16')}>
+      <div className={cn('transition-all duration-200', sidebarOpen ? 'lg:pl-60' : 'lg:pl-16')}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
+            {/* Mobile menu */}
             <button
               className="lg:hidden p-2 rounded-md text-ink-500 hover:bg-ink-100"
               onClick={() => setMobileOpen(true)}
@@ -216,10 +228,7 @@ export function AppLayout({
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-          <div className={cn(
-            'fixed bottom-16 z-40 w-56 bg-white rounded-lg border border-ink-200 shadow-elevated py-1',
-            expanded ? 'left-4' : 'left-4',
-          )}>
+          <div className="fixed bottom-16 left-4 z-40 w-56 bg-white rounded-lg border border-ink-200 shadow-elevated py-1">
             <div className="px-3 py-2 border-b border-ink-100">
               <p className="text-sm font-medium text-ink-900 truncate">{displayName}</p>
               <p className="text-xs text-ink-500 truncate">{profile?.firmName ?? 'Independent practice'}</p>

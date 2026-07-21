@@ -6,8 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/EmptyState';
 import type { View } from '../components/layout/AppLayout';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 
 interface Props {
@@ -67,7 +66,7 @@ export function Dashboard({ onNavigate }: Props) {
       {/* 3 Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Cases donut */}
+        {/* Cases bar */}
         <Card className="p-5">
           <p className="text-sm font-semibold text-ink-700 mb-1">Cases</p>
           <p className="text-xs text-ink-400 mb-4">Breakdown by status</p>
@@ -75,13 +74,16 @@ export function Dashboard({ onNavigate }: Props) {
             <div className="flex items-center justify-center h-44 text-sm text-ink-400">No cases yet.</div>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={casesData} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="value">
-                  {casesData.map((_, i) => <Cell key={i} fill={caseColors[i % caseColors.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v) => [`${v}`, '']} />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
+              <BarChart data={casesData} barSize={40}>
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={20} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {casesData.map((entry, i) => (
+                    <Cell key={i} fill={caseColors[i % caseColors.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           )}
         </Card>
@@ -90,32 +92,40 @@ export function Dashboard({ onNavigate }: Props) {
         <Card className="p-5">
           <p className="text-sm font-semibold text-ink-700 mb-1">Tasks</p>
           <p className="text-xs text-ink-400 mb-4">Pending vs overdue</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={tasksData} barSize={40}>
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={20} />
-              <Tooltip cursor={{ fill: '#f1f5f9' }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {tasksData.map((entry, i) => (
-                  <Cell key={i} fill={entry.name === 'Overdue' && entry.value > 0 ? RED : BLUE} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {tasksData.every(d => d.value === 0) ? (
+            <div className="flex items-center justify-center h-44 text-sm text-ink-400">No tasks yet.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={tasksData} barSize={40}>
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={20} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {tasksData.map((entry, i) => (
+                    <Cell key={i} fill={entry.name === 'Overdue' && entry.value > 0 ? RED : BLUE} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         {/* Events by day */}
         <Card className="p-5">
           <p className="text-sm font-semibold text-ink-700 mb-1">Events</p>
           <p className="text-xs text-ink-400 mb-4">Upcoming by day of week</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={eventsByDay} barSize={20}>
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={20} />
-              <Tooltip cursor={{ fill: '#f1f5f9' }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} fill={GREEN} />
-            </BarChart>
-          </ResponsiveContainer>
+          {eventsByDay.every(d => d.value === 0) ? (
+            <div className="flex items-center justify-center h-44 text-sm text-ink-400">No upcoming events.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={eventsByDay} barSize={20}>
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={20} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} fill={GREEN} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
 
